@@ -2,7 +2,7 @@ import random
 import uasyncio as asyncio
 
 from src import ws2812b
-from src import LEDBlock2 as LEDBlock
+from src import LEDBlock
 
 COLORS_RGB = [
     (255, 0, 0), (0, 255, 0), (0, 0, 255),

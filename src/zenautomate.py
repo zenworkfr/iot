@@ -230,12 +230,10 @@ class ZenAutomate:
                 trouve = not(block.active_scene)
             block.active_scene = True
             color = random.choice(COLORS)
-            print(color)
-             #color=
             step_on = 60
+            step_off = 40
             duration_on = random.uniform(0, 5)
             on = random.uniform(1, 20)
-            step_off = 40
             duration_off=random.uniform(1, 10)
             await self.fadeblock(block,0, color,step_on,duration_on)
             await asyncio.sleep(on)
