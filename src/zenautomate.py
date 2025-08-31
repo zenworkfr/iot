@@ -17,12 +17,18 @@ class ZenAutomate:
         black = [0] * self.input_obj.NB_LEDS
         self.buffer_scenes = black[:]
         self.buffer_scintillement = black[:]
+        self.buffer_scintillementPat = black[:]
         self.buffer_mirroirRun = black[:]
         self.buffer = black[:]
         self.buffer_start_scenes = black[:]
         self.pin_running_alone = Pin(13, Pin.IN, Pin.PULL_UP)
         self.pin_starting = Pin(12, Pin.IN, Pin.PULL_UP)
         self.pin_mirroir = Pin(11, Pin.IN, Pin.PULL_UP)
+        self.pin_pat_button = Pin(10, Pin.IN, Pin.PULL_UP)
+        self.pat_button = False
+        self.running_alone = False
+        self.starting_state = False
+        self.mirroir = False
         
     async def scene_controller(self):
         """
@@ -36,12 +42,24 @@ class ZenAutomate:
             for key in to_remove:
                 del active_tasks[key]
 
+            # pat
+            if self.pat_button and "pat" not in active_tasks:
+                print("Démarrage pat")
+                task = asyncio.create_task(self.random_scintillement("pat"))
+                active_tasks["pat"] = task
+            elif not self.pat_button and "pat" in active_tasks:
+                print("Arrêt pat")
+                self.buffer_scintillementPat = self.input_obj.set_all((0,0,0))
+                active_tasks["pat"].cancel()
+                del active_tasks["pat"]
+
+
             # running_alone
             if self.running_alone and not any(f"random_scint{x}" in active_tasks for x in range(MAX_ACTIVE)):
                 print("Démarrage random_scint")
                 tasks =[]
                 for i in range(MAX_ACTIVE):
-                    task = asyncio.create_task(self.random_scintillement())
+                    task = asyncio.create_task(self.random_scintillement(""))
                     active_tasks["random_scint" + str(i)] = task
             elif not self.running_alone and any(f"random_scint{x}" in active_tasks for x in range(MAX_ACTIVE)):
                 print("Arrêt random_scint")
@@ -49,6 +67,7 @@ class ZenAutomate:
                 for i in range(MAX_ACTIVE):
                     active_tasks["random_scint" + str(i)].cancel()
                 del active_tasks["random_scint" + str(i)]
+
 
             # starting
             if self.starting_state == 0:
@@ -118,16 +137,19 @@ class ZenAutomate:
         prev_starting = 1
         self.starting_state = 0   # 0=stop, 1=prg1, 2=prg2, ...
         prev_mirroir = 1
+        prev_pat_button = 1
 
         # États initiaux
         self.running_alone = False
         self.starting = False
         self.mirroir = False
+        self.pat_button = False
 
         while True:
             cur_running_alone = self.pin_running_alone.value()
             cur_starting = self.pin_starting.value()
             cur_mirroir = self.pin_mirroir.value()
+            cur_pat_button = self.pin_pat_button.value()
             
 
             # running_alone toggle
@@ -146,9 +168,17 @@ class ZenAutomate:
                 self.mirroir = not self.mirroir
                 print("mirroir =", self.mirroir)
 
+            # mirroir pat_button
+            if prev_pat_button == 1 and cur_pat_button == 0:
+                self.pat_button = not self.pat_button
+                print("pat_button =", self.pat_button)
+
+
+
             prev_running_alone = cur_running_alone
             prev_starting = cur_starting
             prev_mirroir = cur_mirroir
+            prev_pat_button = cur_pat_button
 
             await asyncio.sleep_ms(delay_ms)
 
@@ -213,6 +243,11 @@ class ZenAutomate:
             self.buffer_scintillement[block.indices[0]:block.indices[0] + block.size] = [color_compute]*block.size
             await asyncio.sleep(mytime)
 
+    async def fadeblockPat(self, block,color_final, on):
+        self.buffer_scintillementPat[block.indices[0]:block.indices[0] + block.size] = [color_final]*block.size
+        await asyncio.sleep(on)
+    
+        
     async def demo(self, color1, color2, step_on, duration_on, buffer_scenes, delay):
         print("prg demo ZenAutomate lancé")
         while True:
@@ -239,14 +274,25 @@ class ZenAutomate:
             await asyncio.sleep(on)
             await self.fadeblock(block, color, 0,step_off,duration_off)
             block.active_scene = False
-    
-    
-    
-    async def random_scintillement(self):
+            
+    async def scintillementBlockPat(self):
+        NUM_PAT = 6
+        while True:
+            block = self.input_obj.blocks[NUM_PAT]
+            block.active_scene = True
+            color = random.choice(COLORS)
+            on = 0.5
+            await self.fadeblockPat(block, color, on)
+            
+            
+    async def random_scintillement(self, mytype):
         while True:
             color = random.choice(COLORS_RGB)
-            await self.scintillementBlock()
-    
+            if mytype == "pat":
+                await self.scintillementBlockPat()
+            else:
+                await self.scintillementBlock()
+                
     async def mirroirRun(self, time_step = 1, color = (-1,-1,-1)):
         print("prg ZenAutomate mirroirRun lancé")
         mysize = 9
@@ -266,7 +312,12 @@ class ZenAutomate:
 
     async def show(self, time_step = 1):
         while True:
-            self.buffer[:] = self.mix(self.buffer_start_scenes,self.mix(self.buffer_mirroirRun ,self.force(self.buffer_scenes,self.buffer_scintillement)))
+            a = self.mix(self.buffer_scenes, self.buffer_scintillement)
+            b = self.mix(self.buffer_start_scenes, self.buffer_mirroirRun)
+            c = self.mix(a,b)
+            d = self.mix(self.buffer_scintillementPat,c)
+            
+            self.buffer[:] = d
             self.input_obj.leds.pixels = array.array("I", self.buffer)
             self.input_obj.show()
             await asyncio.sleep(time_step)
