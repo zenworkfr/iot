@@ -12,17 +12,6 @@ COLORS_RGB = [
 
 COLORS = [16711680, 65280, 255, 16777215, 16711935, 16776960, 65535]
 
-PATERN = ["ABBABAABBAABABBA",
-          "AAAAABBAABBAAAAA",
-          "BBBBBAABBAABBBBB",
-          "ABBAABBAABBAABBA",
-          "AAAABBBBAAAABBBB",
-          "AXXAXXXXXXXXAXXA",
-          "XXXXXAAXXAAXXXXX",
-          "XXAXAAAXXXAXXAXX"]
-
-
-
 
 class ZenOutput:
     def __init__(self, name):
@@ -97,7 +86,7 @@ class ZenOutput:
 
 class ZenOutput4x4(ZenOutput):
     
-    PATTERNS = {    "black": "XXXXXXXXXXXXXXXX",
+    PATERNS = {    "black": "XXXXXXXXXXXXXXXX",
                     "centre": "BBBBBAABBAABBBBB",
                     "cotes": "ABBABBBBBBBBABBA",
                     "grandX": "ABBABAABBAABABBA",
@@ -179,66 +168,52 @@ class ZenOutput4x4(ZenOutput):
             
         return res;
     
-    async def prg_4x4_sympa_v2(self, color1, color2, step_on, duration_on, buffer_scenes, delay):
-        delay = 1
-        #await self.fade2(PATTERNS["centre"], color1, color2, delay)
-        #await self.fade(value_croix, step_on, duration_on, buffer_scenes, delay)
-        #await self.fade(value_croix_cent, step_on, duration_on, buffer_scenes, delay)
-        #await self.fade(value_rond, step_on, duration_on, buffer_scenes, delay)
-        #await self.fade(value_jesus1, step_on, duration_on, buffer_scenes, delay)
-        #await self.fade(value_jesus2, step_on, duration_on, buffer_scenes, delay)
-        #await self.fade(vertical1, int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
-        #await self.fade(vertical2, int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
-        #await self.fade(vertical3, int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
-        #await self.fade(vertical4, int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
-        #await self.fade(hauteur1, int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
-        #await self.fade(hauteur2, int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
-        #await self.fade(hauteur3, int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
-        #await self.fade(hauteur4, int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
-        #await self.fade(full, int(step_on/4), int(duration_on/4), buffer_scenes, delay*2)
-        #await self.fade(value_black, int(step_on/4), int(duration_on/4), buffer_scenes, delay*2)
-        
-    
-    
     async def prg_4x4_sympa(self, color1, color2, step_on, duration_on, buffer_scenes, delay):
-        print(f"[{self.name}] Mon prg 4x4 sympathique " + str(color1) + " " + str(color2) + " " + str(step_on) + " " + str(duration_on) + " " + str(delay))
-        if color1 == "RAND1TIME":
-            color1 = random.choice(COLORS_RGB)
-        if color2 == "RAND1TIME":
-            color2 = random.choice(COLORS_RGB)
-        value_black = self.set_all((0,0,0))
-        value_centre  = self.full("BBBBBAABBAABBBBB", color1, color2)
-        value_croix   = self.full("ABBABBBBBBBBABBA", color1, color2)
-        value_croix_cent = self.full("AXXAXAAXXAAXAXXA", color1, color2)
-        value_rond    = self.full("BAABABBAABBABAAB", color1, color2)
-        value_jesus1  = self.full("BBABAAABBBABBABB", color1, color2)
-        value_jesus2  = self.full("BABBBAAABABBBBAB", color1, color2)
-        hauteur1      = self.full("ABBBBBBAABBBBBBA", color1, color2)
-        hauteur2      = self.full("BABBBBABBABBBBAB", color1, color2)
-        hauteur3      = self.full("BBABBABBBBABBABB", color1, color2)
-        hauteur4      = self.full("BBBAABBBBBBAABBB", color1, color2)
-        vertical1     = self.full("AAAABBBBBBBBBBBB", color1, color2)
-        vertical2     = self.full("BBBBAAAABBBBBBBB", color1, color2)
-        vertical3     = self.full("BBBBBBBBAAAABBBB", color1, color2)
-        vertical4     = self.full("BBBBBBBBBBBBAAAA", color1, color2)
-        full          = self.full("AAAAAAAAAAAAAAAA", color1, color2)            
+        await self.fade(self.full(self.PATERNS["centre"], color1, color2), step_on, duration_on, buffer_scenes, delay)
+        await self.fade(self.full(self.PATERNS["cotes"], color1, color2), step_on, duration_on, buffer_scenes, delay)
+        await self.fade(self.full(self.PATERNS["grandX"], color1, color2), step_on, duration_on, buffer_scenes, delay)
+        await self.fade(self.full(self.PATERNS["rond"], color1, color2), step_on, duration_on, buffer_scenes, delay)
+        await self.fade(self.full(self.PATERNS["jesus1"], color1, color2), step_on, duration_on, buffer_scenes, delay)
+        await self.fade(self.full(self.PATERNS["jesus2"], color1, color2), step_on, duration_on, buffer_scenes, delay)
+        await self.fade(self.full(self.PATERNS["vertical1"], color1, color2), int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
+        await self.fade(self.full(self.PATERNS["vertical2"], color1, color2), int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
+        await self.fade(self.full(self.PATERNS["vertical3"], color1, color2), int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
+        await self.fade(self.full(self.PATERNS["vertical4"], color1, color2), int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
+        await self.fade(self.full(self.PATERNS["vertical3"], color1, color2), int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
+        await self.fade(self.full(self.PATERNS["vertical2"], color1, color2), int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
+        await self.fade(self.full(self.PATERNS["vertical1"], color1, color2), int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
+        await self.fade(self.full(self.PATERNS["grandX"], color1, color2), step_on, duration_on, buffer_scenes, delay)
+        await self.fade(self.full(self.PATERNS["hauteur1"], color1, color2), int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
+        await self.fade(self.full(self.PATERNS["hauteur2"], color1, color2), int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
+        await self.fade(self.full(self.PATERNS["hauteur3"], color1, color2), int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
+        await self.fade(self.full(self.PATERNS["hauteur4"], color1, color2), int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
+        await self.fade(self.full(self.PATERNS["hauteur3"], color1, color2), int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
+        await self.fade(self.full(self.PATERNS["hauteur2"], color1, color2), int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
+        await self.fade(self.full(self.PATERNS["hauteur1"], color1, color2), int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
+        await self.fade(self.full(self.PATERNS["grandX"], color1, color2), step_on, duration_on, buffer_scenes, delay)
         
-        await self.fade(value_centre, step_on, duration_on, buffer_scenes, delay)
-        await self.fade(value_croix, step_on, duration_on, buffer_scenes, delay)
-        await self.fade(value_croix_cent, step_on, duration_on, buffer_scenes, delay)
-        await self.fade(value_rond, step_on, duration_on, buffer_scenes, delay)
-        await self.fade(value_jesus1, step_on, duration_on, buffer_scenes, delay)
-        await self.fade(value_jesus2, step_on, duration_on, buffer_scenes, delay)
-        await self.fade(vertical1, int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
-        await self.fade(vertical2, int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
-        await self.fade(vertical3, int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
-        await self.fade(vertical4, int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
-        await self.fade(hauteur1, int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
-        await self.fade(hauteur2, int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
-        await self.fade(hauteur3, int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
-        await self.fade(hauteur4, int(step_on/4), int(duration_on/4), buffer_scenes, int(delay/4))
-        await self.fade(full, int(step_on/4), int(duration_on/4), buffer_scenes, delay*2)
-        await self.fade(value_black, int(step_on/4), int(duration_on/4), buffer_scenes, delay*2)
+        await self.fade(self.full(self.PATERNS["hauteur12_34"], color1, color2), step_on, duration_on, buffer_scenes, delay)
+        await self.fade(self.full(self.PATERNS["hauteur12_34"], color2, color1), step_on, duration_on, buffer_scenes, delay)
+        await self.fade(self.full(self.PATERNS["hauteur12_34"], color1, color2), step_on, duration_on, buffer_scenes, delay)
+        await self.fade(self.full(self.PATERNS["hauteur12_34"], color2, color1), step_on, duration_on, buffer_scenes, delay)
         
+        await self.fade(self.full(self.PATERNS["hauteur13_24"], color1, color2), step_on, duration_on, buffer_scenes, delay)
+        await self.fade(self.full(self.PATERNS["hauteur13_24"], color2, color1), step_on, duration_on, buffer_scenes, delay)
+        await self.fade(self.full(self.PATERNS["hauteur13_24"], color1, color2), step_on, duration_on, buffer_scenes, delay)
+        await self.fade(self.full(self.PATERNS["hauteur13_24"], color2, color1), step_on, duration_on, buffer_scenes, delay)
+        
+        await self.fade(self.full(self.PATERNS["vertical12_34"], color1, color2), step_on, duration_on, buffer_scenes, delay)
+        await self.fade(self.full(self.PATERNS["vertical12_34"], color2, color1), step_on, duration_on, buffer_scenes, delay)
+        await self.fade(self.full(self.PATERNS["vertical12_34"], color1, color2), step_on, duration_on, buffer_scenes, delay)
+        await self.fade(self.full(self.PATERNS["vertical12_34"], color2, color1), step_on, duration_on, buffer_scenes, delay)
+        
+        await self.fade(self.full(self.PATERNS["vertical13_24"], color1, color2), step_on, duration_on, buffer_scenes, delay)
+        await self.fade(self.full(self.PATERNS["vertical13_24"], color2, color1), step_on, duration_on, buffer_scenes, delay)
+        await self.fade(self.full(self.PATERNS["vertical13_24"], color1, color2), step_on, duration_on, buffer_scenes, delay)
+        await self.fade(self.full(self.PATERNS["vertical13_24"], color2, color1), step_on, duration_on, buffer_scenes, delay)
+       
+        await self.fade(self.full(self.PATERNS["full"], color1, color2), int(step_on/4), int(duration_on/4), buffer_scenes, delay*2)
+        await self.fade(self.full(self.PATERNS["black"], color1, color2), int(step_on/4), int(duration_on/4), buffer_scenes, delay)
+
     def show(self):
         self.leds.show()

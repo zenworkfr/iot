@@ -10,15 +10,6 @@ COLORS_RGB = [
 
 COLORS = [16711680, 65280, 255, 16777215, 16711935, 16776960, 65535]
 
-PATERN = ["ABBABAABBAABABBA",
-          "AAAAABBAABBAAAAA",
-          "BBBBBAABBAABBBBB",
-          "ABBAABBAABBAABBA",
-          "AAAABBBBAAAABBBB",
-          "AXXAXXXXXXXXAXXA",
-          "XXXXXAAXXAAXXXXX",
-          "XXAXAAAXXXAXXAXX"]
-
 class ZenAutomate:
     def __init__(self, input_obj, time_step=1):
         self.input_obj = input_obj
@@ -38,7 +29,7 @@ class ZenAutomate:
         Gère les scènes dynamiquement selon les états GPIO
         """
         active_tasks = {}
-
+        MAX_ACTIVE = 6
         while True:
             # Nettoyage des tâches terminées (au cas où)
             to_remove = [key for key, task in active_tasks.items() if task.done()]
@@ -46,14 +37,18 @@ class ZenAutomate:
                 del active_tasks[key]
 
             # running_alone
-            if self.running_alone and "random_scint" not in active_tasks:
+            if self.running_alone and not any(f"random_scint{x}" in active_tasks for x in range(MAX_ACTIVE)):
                 print("Démarrage random_scint")
-                task = asyncio.create_task(self.random_scintillement())
-                active_tasks["random_scint"] = task
-            elif not self.running_alone and "random_scint" in active_tasks:
+                tasks =[]
+                for i in range(MAX_ACTIVE):
+                    task = asyncio.create_task(self.random_scintillement())
+                    active_tasks["random_scint" + str(i)] = task
+            elif not self.running_alone and any(f"random_scint{x}" in active_tasks for x in range(MAX_ACTIVE)):
                 print("Arrêt random_scint")
-                active_tasks["random_scint"].cancel()
-                del active_tasks["random_scint"]
+                self.buffer_scintillement = self.input_obj.set_all((0,0,0))
+                for i in range(MAX_ACTIVE):
+                    active_tasks["random_scint" + str(i)].cancel()
+                del active_tasks["random_scint" + str(i)]
 
             # starting
             if self.starting_state == 0:
@@ -62,21 +57,24 @@ class ZenAutomate:
             if self.starting_state == 1:
                 if "prg1" not in active_tasks:
                     print("Démarrage prg1")
+                    self.buffer_scenes = self.input_obj.set_all((0,0,0))
+                    self.buffer_scenes = self.input_obj.set_all((0,0,0))
                     task = asyncio.create_task(self.demo(color1 = "RAND", color2=(0,0,0),
                                                          step_on=100, duration_on = 3, buffer_scenes=self.buffer_scenes, delay=5))
                     active_tasks["prg1"] = task
             else:
                 if "prg1" in active_tasks:
                     print("Arrêt prg1")
-                    
+                    self.buffer_scenes = self.input_obj.set_all((0,0,0))
                     active_tasks["prg1"].cancel()
                     del active_tasks["prg1"]
 
             if self.starting_state == 2:
                 if "prg2" not in active_tasks:
                     print("Démarrage prg2")
-                    task = asyncio.create_task(self.demo(color1 = "RAND1TIME", color2=(0,0,0),
-                                                         step_on=10, duration_on = 0.5, buffer_scenes=self.buffer_scenes, delay=1))
+                    self.buffer_scenes = self.input_obj.set_all((0,0,0))
+                    task = asyncio.create_task(self.demo(color1 = "RAND", color2=(0,0,0),
+                                                         step_on=1, duration_on = 0.2, buffer_scenes=self.buffer_scenes, delay=0.5))
                     active_tasks["prg2"] = task
             else:
                 if "prg2" in active_tasks:
@@ -88,8 +86,9 @@ class ZenAutomate:
             if self.starting_state == 3:
                 if "prg3" not in active_tasks:
                     print("Démarrage prg3")
+                    self.buffer_scenes = self.input_obj.set_all((0,0,0))
                     task = asyncio.create_task(self.demo(color1 = "RAND", color2=(0,0,0),
-                                                         step_on=100, duration_on = 10, buffer_scenes=self.buffer_scenes, delay=15))
+                                                         step_on=100, duration_on = 200, buffer_scenes=self.buffer_scenes, delay=500))
                     active_tasks["prg3"] = task
             else:
                 if "prg3" in active_tasks:
@@ -209,7 +208,7 @@ class ZenAutomate:
         mytime = duration / steps
         for step in range(steps+1):
             t = 1 - step / steps
-            color_compute = self.mixpixcoef(color_initial, color_final,t)    
+            color_compute = self.input_obj.mixpixcoef(color_initial, color_final,t)    
             #print(str(t) + " " + str(color_compute))    
             self.buffer_scintillement[block.indices[0]:block.indices[0] + block.size] = [color_compute]*block.size
             await asyncio.sleep(mytime)
@@ -230,22 +229,20 @@ class ZenAutomate:
                 block = random.choice(self.input_obj.blocks)
                 trouve = not(block.active_scene)
             block.active_scene = True
-            color = random.choice(COLORS_RGB)
-            print("no color")
+            color = random.choice(COLORS)
+            print(color)
              #color=
-            step_on = 20
-            duration_on = random.uniform(0, 3)
+            step_on = 60
+            duration_on = random.uniform(0, 5)
             on = random.uniform(1, 20)
             step_off = 40
             duration_off=random.uniform(1, 10)
-            off=0
-            
-            
-            await self.fadeblock(block,0, rvb_to_dec(color),step_on,duration_on)
+            await self.fadeblock(block,0, color,step_on,duration_on)
             await asyncio.sleep(on)
-            await self.fadeblock(block, rvb_to_dec(color), 0,step_off,duration_off)
-            await asyncio.sleep(off)
+            await self.fadeblock(block, color, 0,step_off,duration_off)
             block.active_scene = False
+    
+    
     
     async def random_scintillement(self):
         while True:
@@ -267,14 +264,11 @@ class ZenAutomate:
                 frame[36-i-1] = color
                 self.buffer_mirroirRun = [0] * 40 + frame + [0] * 80
                 await asyncio.sleep(time_step)
-            
             await asyncio.sleep(time_step)
 
     async def show(self, time_step = 1):
-        print("SHOW START")
         while True:
             self.buffer[:] = self.mix(self.buffer_start_scenes,self.mix(self.buffer_mirroirRun ,self.force(self.buffer_scenes,self.buffer_scintillement)))
-            # print("Compute Buffer" + str(self.buffer))
             self.input_obj.leds.pixels = array.array("I", self.buffer)
             self.input_obj.show()
             await asyncio.sleep(time_step)
